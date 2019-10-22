@@ -1,0 +1,112 @@
+********************************************************
+**              Joins and Compound Key                **
+********************************************************
+
+use Sakila;
+go
+
+select cus.first_name + ' ' + cus.last_name as 'Customer'
+	  ,cp.[Total Amount]
+	  ,cp.[Total Transactions]
+from bia.vwCustomerPerformance cp left outer join dbo.customer cus
+	on cp.[Customer ID] = cus.customer_id
+; --599 rows
+
+select cus.first_name+' '+cus.last_name as 'Customer'
+		,cpm.[Year Payment]
+		,cpm.[Month of Payment]
+		,cpm.[Total Amount]
+		,cpm.[Total Transactions]
+
+from bia.vwCustomerPerformanceByMonth cpm inner join dbo.customer cus
+	on cpm.[Customer ID] = customer_id
+	inner join bia.vwPaymentMonth pm
+	on cpm.[Year Payment] = pm.YrPayment 
+		and cpm.[Month of Payment] = pm.MthPayment -- Compound keys!! 2 PK to join to tables!!! 
+order by 1 asc
+; -- 2466
+
+********************************************************
+**              Creating PK View                      **
+********************************************************
+
+
+use Chinook;
+go
+
+select count(*) 
+from dbo.Album; -- 347 Albums
+
+select count(*) 
+from dbo.Artist; -- 275 Artists
+
+select ar.ArtistId as 'id'
+	  ,ar.[Name] as 'artist'
+	  ,al.Title as 'title'
+
+from dbo.Artist ar left join dbo.Album al
+	on ar.ArtistId = al.ArtistId
+; 
+-- 347 inner join albums
+-- 275 artists
+-- 418 left outer We have orphan albums here!! 
+-- 71 orphans
+
+
+--WHO ARE THE ORPHANS??
+
+select ar.ArtistId as 'id'
+	  ,ar.[Name] as 'artist'
+	  ,al.Title as 'title'
+
+from dbo.Artist ar left join dbo.Album al
+	on ar.ArtistId = al.ArtistId
+where al.Title is null
+; 
+
+-- Flat the tables
+
+select ar.ArtistId as 'artistid'
+	  ,ar.[Name] as 'artist'
+	  ,'Artist Desc' as 'artistDesc'
+	  
+	  ,al.AlbumId as 'albumtitle'
+	  ,case  
+			when al.AlbumId is null then -99 --The case command only works if you clarify what collumn and data are going to be null
+			else al.AlbumId
+		end
+
+
+	  ,al.Title as 'albumtitle'
+	  ,'Album Desc' as 'albumDesc'
+
+from dbo.Artist ar left join dbo.Album al
+	on ar.ArtistId = al.ArtistId
+where al.Title is null
+; 
+
+
+  
+--We need a new PK / Concatenate ArtistId and New column
+
+create view bia.vwArtistAlbum
+as
+
+select convert(bigint,(convert(varchar(25), ar.ArtistId)
+	 
+	 +
+	 case
+			when al.AlbumId is null then '000000'
+			else convert(varchar(25), al.AlbumId) 
+		end)) as 'txtid'
+
+	  ,ar.ArtistId as 'artistid'
+	  ,ar.[Name] as 'artist'
+	  ,'Artist Desc' as 'artistDesc'
+	  ,al.Title as 'albumtitle'
+	  ,'Album Desc' as 'albumDesc'
+
+from dbo.Artist ar left join dbo.Album al
+	on ar.ArtistId = al.ArtistId
+; 
+go
