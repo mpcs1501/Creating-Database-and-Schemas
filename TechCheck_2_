@@ -1,0 +1,161 @@
+-- Using Chinook
+USE Chinook;
+GO 
+***************************************************************************
+-- query the dbo.customer table and do the following:
+-- create a field called 'Initials' with the first letters of the 1st
+-- and last namesin lower case (i.e. pd) 
+-- For each field in 'State'that is NULL - replace it with the country name
+***************************************************************************
+SELECT *
+FROM dbo.Customer
+;
+
+SELECT
+		 cus.CustomerId
+		,cus.FirstName
+		,cus.LastName
+		,(LOWER(left(FirstName,1))
+		+ 
+		LOWER(left(LastName,1))) as 'Initials'
+--		,cus.[State]
+		,CASE
+			WHEN cus.[State] is NULL THEN cus.Country
+			WHEN cus.[State] is NOT NULL THEN cus.[State]
+			ELSE 'Error'
+		 END as 'State'
+		,cus.Country
+
+FROM dbo.Customer cus
+;
+
+*************************************************************************************
+-- Join the dbo.Customer table and the dbo.Employee table (figure out the proper join)
+-- return each support rep with their customer (bring back support rep id, 
+-- employee first name and last name together in one field called employee, 
+-- and customer name with first and last name together)
+*************************************************************************************
+
+
+
+SELECT *
+FROM [dbo].[Customer] cus LEFT JOIN [dbo].[Employee] rep
+ON cus.SupportRepId = rep.EmployeeId
+;
+--59 linesempl
+
+SELECT 
+	  rep.EmployeeId AS 'repId'
+	 ,(rep.FirstName + ' ' + rep.LastName) AS 'Employee'
+	 ,cus.FirstName + ' ' + cus.LastName AS 'Customer'
+
+FROM [dbo].[Customer] cus LEFT JOIN [dbo].[Employee] rep --Changing the type of joins you see that employees didn't get any customers
+ON cus.SupportRepId = rep.EmployeeId
+ORDER BY repId
+;
+
+***************************************************************************
+-- Use the previous query as a subquery and create a query that produces 
+-- the following:
+-- a list of the support reps and the COUNT of customers each has
+***************************************************************************
+
+SELECT 
+		 rep.Employee
+		,COUNT(DISTINCT rep.Customer) 
+		
+FROM	(
+			SELECT 
+					  rep.EmployeeId AS 'repId'
+					 ,(rep.FirstName + ' ' + rep.LastName) AS 'Employee'
+					 ,cus.FirstName + ' ' + cus.LastName AS 'Customer'
+
+				FROM [dbo].[Customer] cus LEFT JOIN [dbo].[Employee] rep --Changing the joins you see that some employees didn't get any customers
+				ON cus.SupportRepId = rep.EmployeeId
+				
+		 ) rep
+		 GROUP BY rep.Employee
+;
+			
+
+
+--****might be in the test****
+select * 
+from dbo.Artist a inner join dbo.Album al
+	on a.ArtistId = al.ArtistId 
+where a.Name like '%R.E.M.%'
+;
+
+
+select * 
+from dbo.Artist a 
+where a.Name like '%R.E.M.%'
+;
+
+
+
+
+use sakila;
+go
+
+--List of customers with the following:
+--1) total transactions per cus
+--2) avg of payments per cus
+
+select cus.customer_id --use the pk - not the fk in the fact table
+	  ,count(pay.payment_id) AS 'transactions'
+--	  ,count(*) --Same Thing as the one before. It's counting.
+	  ,avg(pay.amount) AS 'avg_payment'
+	  ,sum(pay.amount) AS 'Sum_of_Payments'
+
+from dbo.payment pay left join dbo.customer cus
+		on pay.customer_id = cus.customer_id
+group by cus.customer_id
+order by 3 desc
+;
+
+
+
+
+--Limit the set for the following:
+--1) customer MUST have 20 or more transactions
+
+
+select cus.customer_id --use the pk - not the fk in the fact table
+	  ,count(pay.payment_id) AS 'transactions'
+--	  ,count(*) --Same Thing as the one before. It's counting.
+	  ,avg(pay.amount) AS 'AVG'
+	  
+
+from dbo.payment pay left join dbo.customer cus
+		on pay.customer_id = cus.customer_id
+group by cus.customer_id
+having count(pay.payment_id) >= 20
+order by 2 desc
+-- order by 2
+;
+
+--2) limit the transactions to ONLY orders greater than a 1.00 //atomic!! WHERE
+--3) Return or Order the customers by avg of payment in Desc order (most to least)
+
+select cus.customer_id --use the pk - not the fk in the fact table
+	  ,cus.last_name AS 'First_Name'
+	  ,cus.first_name
+	  ,cus.first_name+' '+cus.last_name AS 'Customer'
+	  ,cus.email AS 'Email'
+	  ,count(pay.payment_id) AS 'Transactions'
+--	  ,count(*) --Same Thing as the one before. It's counting.
+	  ,avg(pay.amount) AS 'AVG'
+	  
+from dbo.payment pay left join dbo.customer cus
+		on pay.customer_id = cus.customer_id
+where pay.amount > 1.00
+group by cus.customer_id
+		,cus.last_name
+		,cus.first_name
+		,cus.first_name+' '+cus.last_name
+		,cus.email
+having count(pay.payment_id) >= 20
+order by 3 desc
+-- order by 2
+;
