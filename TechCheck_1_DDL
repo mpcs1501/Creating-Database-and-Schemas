@@ -1,0 +1,168 @@
+/*
+	Name: Marcus Sousa
+	Date: September 26th
+	Use Case: DDL Template
+*/
+-- context for DBs
+USE tempdb;
+GO
+
+-- in case the database is locked
+ALTER DATABASE OrdersDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+GO
+
+-- dropping the database
+DROP DATABASE if exists OrdersDB;
+GO
+-- create my database
+CREATE DATABASE OrdersDB;
+GO
+
+-- change context to OrdersDB and create schema 
+USE OrdersDB;
+GO
+
+-- dropping schema if exists
+DROP SCHEMA if exists dev;
+GO
+-- create schema
+CREATE SCHEMA dev;
+GO
+
+--** DATABASE and SCHEMA completed**
+
+--creating tables into the schema
+
+-- products table
+DROP TABLE if exists dev.products;
+GO
+
+CREATE TABLE dev.products(
+	 ProductID int NOT NULL --PK
+	,ProductName nvarchar(50) NULL
+	,SupplierID int NOT NULL -- FK
+	,CategoryID int NOT NULL --FK
+	,Unit nvarchar(50) NULL
+	,Price money NULL
+);
+GO
+
+--categories table
+DROP TABLE if exists dev.categories;
+GO
+
+CREATE TABLE dev.categories(
+	 CategoryID int NOT NULL --PK
+	,CategoryName nvarchar(50) NULL
+	,[Description] nvarchar(100) NULL
+);
+GO
+
+--orders table
+DROP TABLE if exists dev.orders;
+GO
+
+CREATE TABLE dev.orders(
+	  OrderID int NOT NULL -- PK
+	 ,ProductID int NOT NULL -- FK
+	 ,Quantity int NOT NULL
+);
+GO
+
+--suppliers table
+DROP TABLE if exists dev.suppliers;
+GO
+
+CREATE TABLE dev.suppliers(
+	 SupplierID int NOT NULL -- PK
+	,SupplierName nvarchar(50)
+	,City nvarchar(50)
+	,Country nvarchar(50)
+);
+GO
+
+-- Misc commands
+exec sp_changedbowner 'sa';  --In order to create diagrams
+
+-- EVERYTHING IS WORKING GOOOOOOD SO FAR
+-- DEV IS FOR DEVELOPER
+
+--Create all constraints PK and FK
+-- First PK
+
+USE OrdersDB;
+GO
+
+ALTER TABLE	dev.categories
+	ADD CONSTRAINT pk_cat PRIMARY KEY(CategoryID)
+;
+
+ALTER TABLE	dev.products
+	ADD CONSTRAINT pk_prod PRIMARY KEY(ProductID)
+;
+
+ALTER TABLE	dev.suppliers
+	ADD CONSTRAINT pk_sup PRIMARY KEY(SupplierID)
+;
+
+ALTER TABLE	dev.orders
+	ADD CONSTRAINT pk_ord PRIMARY KEY(OrderID)
+;
+
+-- Second Step: FK
+
+ALTER TABLE	dev.products
+	ADD CONSTRAINT fk_to_supp FOREIGN KEY(SupplierID)
+	REFERENCES dev.suppliers(SupplierID) -- must be pk
+	,CONSTRAINT fk_to_cat FOREIGN KEY(CategoryID)
+	REFERENCES dev.categories(CategoryID) -- must be pk
+;
+
+ALTER TABLE	dev.orders
+	ADD CONSTRAINT fk_to_prod FOREIGN KEY(ProductID)
+	REFERENCES dev.products(ProductID)
+;
+
+-- ADD SEED DATA
+
+--Suppliers Data
+INSERT INTO dev.suppliers(SupplierID,SupplierName,City,Country)
+	VALUES(1,'Exotic Liquid','London','UK')
+		 ,(7,'Pavlova Ltd.','Melbourne','Australia')
+		 ,(12,'Plutzer Lebensmittelgroßmärkte AG','Frankfurt','Germany')
+		 ,(23,'Karkki Oy','Lappeenranta','Finland')
+		 ,(25,'Ma Maison','Montréal','Canada')
+		 ,(29,'Forêts dérables','Ste-Hyacinthe','Canada')
+;
+
+--Categories Data
+INSERT INTO dev.categories(CategoryID,CategoryName,[Description])
+	VALUES(1,'Beverages','Soft drinks, coffees, teas, beers, and ales')
+		 ,(2,'Condiments','Sweet and savory sauces, relishes, spreads, and seasonings')
+		 ,(3,'Confections','Desserts, candies, and sweet breads')
+		 ,(6,'Meat/Poultry','Prepared meats')
+;
+
+--Products Data
+INSERT INTO dev.products(ProductID,ProductName,SupplierID,CategoryID,Unit,Price)
+	VALUES(2,'Chang',1,1,'24 - 12 oz bottles',19)
+		 ,(16,'Pavlova',7,3,'32 - 500 g boxes',17.45)
+		 ,(29,'Thüringer Rostbratwurst',12,6,'50 bags x 30 sausgs.',123.79)
+		 ,(55,'Pâté chinois',25,6,'24 boxes x 2 pies',24)
+		 ,(61,'Sirop dérable',29,2,'24 - 500 ml bottles',28.5)
+		 ,(76,'Lakkalikööri',23,1,'500 ml',18)
+;
+
+--Orders Data
+INSERT INTO dev.orders(OrderID,ProductID,Quantity)
+	VALUES(474,55,10)
+		 ,(475,76,20)
+		 ,(509,2,45)
+		 ,(510,16,49)
+		 ,(511,29,24)
+		 ,(512,61,90)
+;
+SELECT * FROM dev.orders;
+SELECT * FROM dev.categories;
+SELECT * FROM dev.suppliers;
+SELECT * FROM dev.products;
