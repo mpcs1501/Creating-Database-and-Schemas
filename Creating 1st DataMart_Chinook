@@ -1,0 +1,160 @@
+FACT Table
+
+use Chinook;
+go
+
+-- dbo.InvoiceLine (left)
+--		joining to invoice (right)
+
+select count(*) from dbo.InvoiceLine; --2240 
+select count(*) from dbo.Invoice; --412
+select * from dbo.invoice;
+
+
+--Creating a Fact Table
+
+
+select il.InvoiceLineId  -- pk
+	  ,il.InvoiceId
+	  ,il.TrackId
+	  ,i.CustomerId
+	  ,convert(date, i.InvoiceDate) as 'InvoiceDate'	  
+--	     fk above
+--	  ,i.Total             We already have the quantity and price!
+	  ,il.UnitPrice      --m1
+	  ,il.Quantity       --m2
+
+into bia.fTransactions
+from dbo.InvoiceLine il inner join dbo.Invoice i
+	on il.InvoiceId = i.InvoiceId
+
+;
+-------------------------------------------------------------------------
+dTrack Table
+
+
+SELECT t.TrackId
+	  ,t.[Name] as 'Track'
+	  ,t.AlbumId
+	  ,a.Title as 'Album'
+	  ,a.ArtistId
+	  ,ar.[Name] as 'Artist'
+INTO bia.Track
+FROM dbo.Track t 
+	left join dbo.Album a
+		on t.AlbumId = a.AlbumId
+	left join dbo.Artist ar
+		on a.ArtistId = ar.ArtistId
+	left join dbo.MediaType mt
+		on t.MediaTypeId = mt.MediaTypeId
+	left join dbo.Genre g
+		on t.GenreId = g.GenreId
+;
+
+-------------------------------------------------------------------------
+dCustomer Table
+
+SELECT CustomerId
+      ,c.FirstName
+      ,c.LastName
+      ,c.Company
+      ,c.[Address]
+      ,c.City
+      ,c.[State]
+      ,c.Country
+      ,c.PostalCode
+      ,c.Phone
+      ,c.Fax
+      ,c.Email
+      ,c.SupportRepId
+	  ,e.FirstName as 'RepFirst'
+	  ,e.LastName as 'RepLast'
+	  ,e.Title as 'RepTitle'
+INTO bia.Customers
+FROM dbo.Customer AS c LEFT JOIN dbo.Employee e
+		ON c.SupportRepId = e.EmployeeId
+;
+-------------------------------------------------------------------------
+dPlaylist Analysis table
+
+SELECT t.TrackId
+	  ,t.[Name] as 'Name'
+	  ,t.AlbumId
+	  ,a.Title as 'Album'
+	  ,a.ArtistId
+	  ,ar.[Name] as 'Artist_Name'
+	  ,pl.PlaylistId
+	  ,pl.[Name] as 'Playlist'
+INTO bia.PlaylistAnalysis
+FROM dbo.Track t 
+	left join dbo.Album a
+		on t.AlbumId = a.AlbumId
+	left join dbo.Artist ar
+		on a.ArtistId = ar.ArtistId
+	left join dbo.PlaylistTrack pt
+		on t.TrackId = pt.TrackId
+	left join dbo.Playlist pl
+		on pt.PlaylistId = pl.PlaylistId
+;
+-------------------------------------------------------------------------
+dPlaylist Table
+
+
+select PlaylistId
+	  ,count(distinct TrackId)
+from dbo.PlaylistTrack
+group by PlaylistId
+;
+
+select plt.TrackId
+	  ,count(distinct plt.PlaylistId) as 'Playlist'
+into bia.playlist
+from dbo.PlaylistTrack plt
+group by plt.TrackId
+;--3503
+
+-------------------------------------------------------------------------
+dCalendar Table
+
+use chinook;
+go
+
+--creating a calendar table
+SELECT 
+		DISTINCT t.InvoiceDate
+	   ,YEAR(t.InvoiceDate) as 'Year'
+	   ,CASE
+			WHEN MONTH(t.InvoiceDate) between 1 and 3 THEN 'Q1'
+			WHEN MONTH(t.InvoiceDate) between 4 and 6 THEN 'Q2'
+			WHEN MONTH(t.InvoiceDate) between 7 and 9 THEN 'Q3'
+			WHEN MONTH(t.InvoiceDate) between 10 and 12 THEN 'Q4'
+		ELSE 'error'
+		END AS 'QTR'
+	   
+	   ,MONTH(t.InvoiceDate) as 'Month'
+	   ,DAY(InvoiceDate) as 'Day'
+	   ,DATENAME(DW, t.InvoiceDate) as 'DayOfWeek'
+	   
+INTO bia.Calendar
+FROM bia.fTransactions as t
+GROUP BY t.InvoiceDate
+;
+
+-------------------------------------------------------------------------
+
+PK,FK and Changing Tables Constraints(not NULL)
+
+
+ALTER TABLE bia.fTransactions
+	ADD CONSTRAINT pk_fTransactions PRIMARY KEY(InvoiceLineId)
+;
+GO
+
+--FK from fTransactions to all Tables
+ALTER TABLE	d.Customer
+	ADD CONSTRAINT fk_to_cust FOREIGN KEY(CustomerId)
+	REFERENCES d.Customer(CustomerId) 
+	,CONSTRAINT fk_to_calendar FOREIGN KEY(InvoiceDate)
+	REFERENCES bia.dCalendar(InvoiceDate) -- Keep going and adding constraints.
+;
+GO
