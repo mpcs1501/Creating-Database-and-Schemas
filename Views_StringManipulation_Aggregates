@@ -1,0 +1,152 @@
+/*
+
+		Select statement - with row level / atomic
+		filtering..(i.e. WHERE clause)
+*/
+
+USE Sakila;
+GO
+
+SELECT pay.*
+FROM bia.payment pay
+; --16,049
+
+--WHERE used for atomic/ Row level Filters
+
+SELECT pay.payment_id AS 'id'
+	  ,pay.customer
+	  ,pay.amount
+FROM bia.payment pay
+;
+
+SELECT pay.payment_id AS 'id'
+	  ,pay.customer 
+	  ,pay.amount
+	  ,pay.payment_date
+FROM bia.payment pay
+WHERE DATEPART(month,pay.payment_date) in (5)
+ORDER BY id ASC
+--ORDER BY id DESC
+--WHERE pay.customer like 'ro%'
+--WHERE pay.customer like 'mar%'
+--WHERE pay.customer like 'Mar_ Smith'
+--WHERE (pay.customer = 'Mary Smith'
+--	  OR pay.customer = 'Maria Miller')
+--	  AND pay.amount > 1.00
+--WHERE pay.customer in ('Mary Smith','Maria Miller')
+--WHERE pay.customer = 'Mary Smith' 
+;
+
+--*****************************************************
+--                   AGGREGATES
+--*****************************************************
+
+SELECT --pay.customer 
+	  SUM(pay.amount) AS 'Total' -- 67,416.51
+		,AVG(pay.amount) AS 'AVGTotal' -- 4.20
+			 ,MIN(pay.amount) AS 'MinAmount' -- 0,00
+		,MAX(pay.amount) AS 'MaxAmount' -- 11.99
+	 ,COUNT(pay.payment_id) AS 'TransCount' --16049
+FROM bia.payment pay
+WHERE pay.customer_id = 1
+;
+
+SELECT pay.customer AS 'Customer'
+	 ,SUM(pay.amount) AS 'TotalAmount' 
+		 ,AVG(pay.amount) AS 'AVGTotal' 
+			 ,MIN(pay.amount) AS 'MinAmount' 
+		 ,MAX(pay.amount) AS 'MaxAmount' 
+	 ,COUNT(pay.payment_id) AS 'TransCount' 
+FROM bia.payment pay
+GROUP BY pay.customer
+HAVING COUNT(pay.payment_id) >=30 
+		AND MAX(pay.amount) > 1 
+ORDER BY 3 DESC
+;
+
+SELECT pay.customer AS 'Customer'
+	 ,SUM(pay.amount) AS 'TotalAmount' 
+		 ,AVG(pay.amount) AS 'AVGTotal' 
+			 ,MIN(pay.amount) AS 'MinAmount' 
+		 ,MAX(pay.amount) AS 'MaxAmount' 
+	 ,COUNT(pay.payment_id) AS 'TransCount' 
+FROM bia.payment pay
+GROUP BY pay.customer
+HAVING AVG(pay.amount) > 4
+ORDER BY 2 DESC
+;
+--384 Customers
+GO
+
+--******************************************--
+--            CREATING VIEWS                --
+--******************************************--
+
+CREATE VIEW bia.vwGoodCustomers
+AS
+SELECT pay.customer
+FROM bia.payment pay
+GROUP BY pay.customer
+HAVING avg(pay.amount) > 4.00
+; --384
+GO
+
+SELECT COUNT(customer) AS 'Good Customers'
+FROM bia.vwGoodCustomers; -- HERE WE CAN COUNT THE VIEW!!
+
+
+--How many customers my staff member dealt with?
+
+SELECT pay.staff
+	  ,pay.customer
+FROM bia.payment pay
+WHERE pay.staff = 'Mike Hillyer'
+;8057
+
+SELECT pay.staff
+	  ,pay.customer
+FROM bia.payment pay
+WHERE pay.staff = 'Jon Stephens'
+;7992
+
+select 7992+8057;
+
+--Answer--
+SELECT pay.staff
+	,COUNT(pay.payment_id) AS 'TransCount'
+	,COUNT(DISTINCT pay.customer) AS 'CusCount'
+FROM bia.payment pay
+GROUP BY pay.staff
+;
+
+--******************************************--
+--           String Manipulation            --
+--******************************************--
+
+SELECT ac.first_name
+	  ,ac.last_name
+	  ,CONCAT(ac.first_name,' ',ac.last_name) AS 'ConcatLast'
+FROM dbo.actor ac
+;
+GO
+-- Get the first letters captalized
+
+CREATE VIEW bia.vwActorsNames 
+AS
+
+SELECT (LEFT(LTRIM(ac.first_name), 1)
+	  -- LOWER Converts everything to lowercase, SUBSTRING, LEFT, RIGHT, RTRIM
+	  + LOWER(SUBSTRING(ac.first_name, 2,LEN(ac.first_name) -1)) )
+	  + ' ' +
+	  (LEFT(LTRIM(ac.last_name), 1)
+	  -- LOWER Converts everything to lowercase, SUBSTRING, LEFT, RIGHT, RTRIM
+	  + LOWER(SUBSTRING(ac.last_name, 2,LEN(ac.last_name) -1))) AS Actors
+--	  ,CONCAT(,' ',3) AS 'ConcatLast'
+FROM dbo.actor ac
+;
+
+-- Separating First and Last Name!
+SELECT LEFT(ac.Actors, CHARINDEX(' ', ac.Actors)-1)
+	,SUBSTRING(ac.Actors, CHARINDEX(' ' , ac.Actors) +1, 20) 
+FROM bia.vwActorsNames ac
+;
