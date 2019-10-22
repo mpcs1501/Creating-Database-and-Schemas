@@ -1,0 +1,120 @@
+/*
+	Name: Marcus Sousa
+	Date: October 1st
+	Use Case: Assignement
+*/
+
+-- context for DBs
+USE tempdb;
+GO
+
+-- in case the database is locked
+ALTER DATABASE OrdersDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+GO
+
+-- dropping the database
+DROP DATABASE if exists FishingDB;
+GO
+-- create my database
+CREATE DATABASE FishingDB;
+GO
+
+-- change context to FishingDB and create schema 
+USE FishingDB;
+GO
+
+-- dropping schema if exists
+DROP SCHEMA if exists dev;
+GO
+
+-- create schema
+CREATE SCHEMA dev;
+GO
+
+--** DATABASE and SCHEMA completed**
+
+--creating tables into the schema--
+
+-- captains table
+DROP TABLE if exists dev.Captains;
+GO
+
+CREATE TABLE dev.Captains(
+	 idCaptain int NOT NULL --PK
+	,fName nvarchar(50) NULL
+	,lName nvarchar(50) NULL 
+);
+GO
+-- idcaptain as a primary key--
+ALTER TABLE	dev.Captains
+	ADD CONSTRAINT pk_cap PRIMARY KEY(idCaptain)
+;
+GO
+
+--ports table--
+DROP TABLE if exists dev.[Ports];
+GO
+
+CREATE TABLE dev.[Ports](
+	 idPort int NOT NULL --PK
+	,portName nvarchar(50) NULL
+);
+GO
+
+-- idport as a primary key--
+ALTER TABLE	dev.[Ports]
+	ADD CONSTRAINT pk_port PRIMARY KEY(idPort)
+;
+GO
+
+--boats table--
+DROP TABLE if exists dev.Boats;
+GO
+
+CREATE TABLE dev.Boats(
+	 idBoat int NOT NULL --PK
+	,boatName nvarchar(50) NULL
+	,boatCapt int NOT NULL -- FK
+	,[port] int NOT NULL -- FK
+);
+GO
+
+-- idboat as a primary key--
+ALTER TABLE	dev.Boats
+	ADD CONSTRAINT pk_boats PRIMARY KEY(idBoat)
+;
+GO
+
+--FK from boats to captains and ports
+ALTER TABLE	dev.Boats
+	ADD CONSTRAINT fk_to_cap FOREIGN KEY(boatCapt)
+	REFERENCES dev.Captains(idCaptain) 
+	,CONSTRAINT fk_to_ports FOREIGN KEY([port])
+	REFERENCES dev.[Ports](idPort) 
+;
+GO
+
+-- ADD SEED DATA --
+
+--Captain Data
+INSERT INTO dev.Captains(idCaptain,fName,lName)
+	VALUES(10,'Kenny','Gaudet')
+		 ,(11,'Joe','White')
+		 ,(12,'Emily','Simms')
+;
+
+--Ports Data
+INSERT INTO dev.[Ports](idPort,portName)
+	VALUES(100,'Kippens')
+		 ,(101,'Harmon')
+		 ,(102,'Aguathuna')
+;
+
+--Boats Data
+INSERT INTO dev.Boats(idBoat,boatName,boatCapt,[port])
+	VALUES(5000,'Sweet Annie',10,101)
+		 ,(5001,'Kippens Dream',11,100)
+		 ,(5002,'Rant and Roar',12,102)
+;
+
+exec sp_changedbowner 'sa';  --In order to create diagrams
