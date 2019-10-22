@@ -1,0 +1,67 @@
+use chinook;
+go
+
+--How many Invoices were there in 2009 and 2011? 
+--What are the respective total sales for each of those years?
+
+select year(inv.InvoiceDate) as 'InvoiceYear'
+	  ,count(distinct il.invoiceid) as 'Invoices'
+	  ,count(distinct il.invoicelineid) as 'Details'
+--	  ,count(inv.InvoiceId) as 'InvoiceCount'
+--	  ,sum(inv.Total) as 'InvoiceTotal'
+	  ,sum(il.UnitPrice * il.Quantity) as 'InvoiceQtyDetail'
+from  dbo.Invoice inv inner join dbo.InvoiceLine il
+	on inv.InvoiceId = il.InvoiceId
+where year(inv.InvoiceDate) in (2009,2011)
+--		and inv.InvoiceId = 2
+group by year(inv.InvoiceDate)
+; -- 2009 , 449.46, 454 / 2011, 469.58, 442
+
+
+--Looking at the InvoiceLine table, provide a query that COUNTs the number of line items for Invoice ID 37.
+select count(*) as 'LineItems'
+from InvoiceLine
+where InvoiceId = 37
+;--4
+
+--Provide a query that shows the # of customers assigned to each sales agent.
+
+select em.FirstName + em.LastName as 'Employee'
+	  ,count(distinct cus.CustomerId) as 'CustomerCount'
+from dbo.Employee em inner join dbo.Customer cus
+	on em.EmployeeId = cus.SupportRepId
+group by em.FirstName + em.LastName
+;
+
+--Which sales agent made the most in sales in 2010?
+--*********************************************************
+--1st solution with a subquery
+select reps.SalesRep
+	  ,sum(reps.TotalSales)
+	  --,max(reps.TotalSales)
+from    			(select emp.FirstName + emp.LastName as 'SalesRep'
+						  ,sum(inv.Total) as 'TotalSales'
+						  ,count(inv.InvoiceId) as 'CountofSales'
+					from dbo.Invoice inv left join dbo.Customer cus
+						on inv.CustomerId = cus.CustomerId
+						left join dbo.Employee emp
+						on cus.SupportRepId = emp.EmployeeId
+					where Year(inv.InvoiceDate) = 2010
+					group by emp.FirstName + emp.LastName) as reps
+
+group by reps.SalesRep
+order by 2 desc
+;
+--*********************************************************
+--2st solution without a subquery
+
+select top 3 (emp.FirstName + emp.LastName) as 'SalesRep'
+						  ,sum(inv.Total) as 'TotalSales'
+						  ,count(inv.InvoiceId) as 'CountofSales'
+					from dbo.Invoice inv left join dbo.Customer cus
+						on inv.CustomerId = cus.CustomerId
+						left join dbo.Employee emp
+						on cus.SupportRepId = emp.EmployeeId
+					where Year(inv.InvoiceDate) = 2010
+					group by emp.FirstName + emp.LastName
+					order by 2 desc;
