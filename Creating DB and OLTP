@@ -1,0 +1,66 @@
+-- Context
+USE tempdb;
+
+--Create DB
+-- in case the database is locked
+ALTER DATABASE Shippers SET SINGLE_USER WITH ROLLBACK IMMEDIATE; 
+
+-- dropping the database
+DROP DATABASE IF exists Shippers;
+
+-- create my database
+CREATE DATABASE Shippers;
+GO
+
+-- change context to OrdersDB and create schema 
+USE Shippers;
+GO
+
+-- dropping schema if exists
+DROP SCHEMA IF EXISTS dev;
+GO
+
+-- Schemas
+CREATE SCHEMA dev;
+GO
+CREATE SCHEMA prod;
+GO
+
+--Creating tables into the schema
+--Context
+USE Shippers;
+
+-- Creating Tables
+DROP TABLE IF EXISTS dev.contractors;
+GO
+
+CREATE TABLE dev.contractors(
+	 Id int NOT NULL -- PK
+	,[Name] NVARCHAR(50) NOT NULL
+	,Lastorder DATE NULL --THE NULL WAS WROTE BECAUSE ITS GOOD PRACTICE
+	,Firstorder DATE NULL
+	,[Days] INT NULL
+	,Months INT NULL
+)
+;
+
+--Adding Keys and Contraints	
+ALTER TABLE dev.Contractors
+	ADD CONSTRAINT pk_cont PRIMARY KEY(Id)
+;
+--Creating Table 2
+DROP TABLE IF EXISTS dev.forders;
+GO
+
+CREATE TABLE dev.forders(
+	ShipperId INT NOT NULL --PK
+	, Orders int NULL
+	, CustOrders int NULL
+	, EmpOrders int NULL
+);
+
+ALTER TABLE dev.fOrders
+	ADD CONSTRAINT pk_ord PRIMARY KEY(ShipperId)
+	,CONSTRAINT fk_to_cont FOREIGN KEY (ShipperId)
+		REFERENCES dev.Contractors(id)
+;
