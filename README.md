@@ -1,2 +1,2 @@
-# Creating-Database-and-Schemas
-Creating DB and Schemas
+# OLTP and Datawarehouses
+Creating DB, Schemas, Seed Data, ALTER, Dimension, Fact
