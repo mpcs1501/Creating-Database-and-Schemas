@@ -1,0 +1,83 @@
+/*
+USE mvUKAccidents;
+GO
+CREATE SCHEMA stg;
+GO
+CREATE SCHEMA lup;
+GO
+CREATE SCHEMA dev;
+GO
+CREATE SCHEMA rpt;
+GO
+*/
+
+/*
+
+SELECT TEMPLATE
+SELECT ...fields(columns)  
+FROM ...table(s)
+WHERE ...filter on details
+GROUP BY group to level
+HAVING ... filter on groups
+ORDER BY ... put in order ASC/DESC
+
+*/
+
+SELECT count (Accident_Index) as 'RowTotal'--
+FROM stg.Casualties; 
+--A:2,216,720
+
+SELECT count (DISTINCT Accident_Index) as 'RowTotal'--
+FROM stg.Casualties; 
+--A:1,640,597
+
+
+-- Creating Lookup table
+CREATE TABLE lup.accIndex(
+	 accID int IDENTITY(1000000,1) NOT NULL
+	,accidentIndex varchar(50)
+)
+;
+-- finding all the different accident indexes
+SELECT ca.Accident_Index 
+FROM stg.Casualties AS ca
+GROUP BY ca.Accident_Index
+ORDER BY Accident_Index ASC
+;
+
+--Putting the indexes into another table
+INSERT INTO lup.accIndex(accidentIndex)
+SELECT ca.Accident_Index --Copyed and pasted from the previous query
+FROM stg.Casualties AS ca
+GROUP BY ca.Accident_Index
+ORDER BY Accident_Index ASC
+;
+
+-- Finding which accidents had more casualties
+select ca.Accident_Index
+	, count(ca.Casualty_Reference) as 'CasualtyCount'
+from stg.Casualties as ca
+group by ca.Accident_Index
+order by 2 desc
+;
+
+--Finding casualties for one accident
+select *
+from stg.Casualties as ca
+where ca.Accident_Index = '20144100J0489'
+;
+
+--Finding the total casulaties per accidents
+SELECT [accID],
+	SUM([CasualtyCnt]) AS 'CasualtyCnt'
+FROM [rpt].[Casualties]
+GROUP BY [accID]
+ORDER BY [CasualtyCnt] desc
+;
+
+--Getting the average of casualties and accidents
+SELECT convert(float, count(*))/count(distinct ca.accID)
+	as 'AvgCasualty'
+FROM rpt.Casualties ca
+;
+--1,35116667895894
