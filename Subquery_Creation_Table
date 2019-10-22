@@ -1,0 +1,38 @@
+SELECT TOP(100) ca.Accident_Index
+--    ,ac.[Date] AS 'AccidentHour'
+--	  ,RIGHT([Date], 4)
+--	  ,SUBSTRING([DATE],4,2) 
+--	  ,SUBSTRING([DATE],1,2) 
+	  ,CONVERT(DATE, RIGHT([Date], 4) + '-' + SUBSTRING([DATE],4,2) + '-' + SUBSTRING([DATE],1,2)) 
+			   AS 'Accident_Date'
+--	  ,CONVERT(DATE, CONCAT(RIGHT(ac.[Date], 4),'-',SUBSTRING(ac.[DATE],4,2), '-',SUBSTRING(ac.[DATE],1,2))) AS 'Accident_Date'
+	  ,datepart(MINUTE,ac.[Time]) as 'AccidentHour'
+--    ,ca.Vehicle_Reference
+--    ,ca.Casualty_Reference
+      ,ca.Casualty_Class
+      ,ca.Sex_of_Casualty
+--    ,ca.Age_Band_of_Casualty
+      ,ca.Casualty_Severity
+      ,ca.Pedestrian_Location
+      ,ca.Pedestrian_Movement
+      ,ca.Car_Passenger
+      ,ca.Bus_or_Coach_Passenger
+      ,ca.Pedestrian_Road_Maintenance_Worker
+      ,ca.Casualty_Type
+      ,ca.Casualty_Home_Area_Type
+	  ,ac.Speed_limit -- string -> use lookup
+	  ,ac.Road_Type
+	  ,ac.Light_Conditions
+	  ,ac.Weather_Conditions
+	  ,ac.Urban_or_Rural_Area
+	  ,ac.Did_Police_Officer_Attend_Scene_of_Accident
+	 ,(CASE WHEN ca.Age_of_Casualty = -1 
+	        THEN NULL -- (SELECT avg(Age_of_Casualty) FROM stg.Casualties0514)
+	   ELSE ca.Age_of_Casualty
+	   END) AS 'Age_of_Casualty'
+	 ,ac.Number_of_Vehicles
+	 ,1 as 'CasualtyCount'
+--INTO rpt.Casualties
+FROM rpt.Casualties ca left outer join stg.Accidents ac
+       ON ca.Accident_Index = ac.Accident_Index
+ ; -- 2,216,720 
