@@ -150,3 +150,45 @@ SELECT LEFT(ac.Actors, CHARINDEX(' ', ac.Actors)-1)
 	,SUBSTRING(ac.Actors, CHARINDEX(' ' , ac.Actors) +1, 20) 
 FROM bia.vwActorsNames ac
 ;
+
+
+USE Sakila;
+GO
+
+SELECT TOP (5) * 
+FROM dbo.payment
+;
+GO
+
+-- you can also alter view
+CREATE VIEW bia.vwCustomerPerformance  
+AS
+SELECT 
+	pay.customer_id AS 'Customer ID'
+	,SUM(pay.amount) AS 'Total Amount'
+	,MIN(pay.amount) AS 'Minimum Amount'
+	,MAX(pay.amount) AS 'Maximum Amount'
+--	,AVG(pay.amount) AS 'Average Amount' -- Easy to give problems
+	,COUNT(*) AS 'Total Transactions'
+--	,SUM(pay.amount)/ COUNT(*) AS 'SUM/COUNT'
+FROM dbo.payment AS pay
+GROUP BY customer_id
+;
+GO
+
+
+CREATE or ALTER VIEW bia.vwCustomerPerformanceByMonth  
+AS
+SELECT pay.customer_id AS 'Customer ID'
+	,YEAR(pay.payment_date) AS 'Year Payment'
+	,MONTH(pay.payment_date) as 'Month of Payment'
+	,SUM(pay.amount) AS 'Total Amount'
+	,MIN(pay.amount) AS 'Minimum Amount'
+	,MAX(pay.amount) AS 'Maximum Amount'
+	,COUNT(*) AS 'Total Transactions'
+FROM dbo.payment AS pay
+GROUP BY pay.customer_id
+		,YEAR(pay.payment_date)
+		,MONTH(pay.payment_date)
+;
+GO
