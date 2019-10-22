@@ -1,0 +1,96 @@
+use chinook;
+go
+
+--*******************************************
+--outer JOINS
+--using NULLS
+--Artist that doesn't have a album
+--*******************************************
+
+select art.ArtistId
+	  ,art.[Name] as 'Artist'
+from dbo.Artist art
+;--275 artist
+
+select art.ArtistId
+	  ,art.[Name] as 'Artist'
+	  ,al.Title
+	  ,al.AlbumId
+from dbo.Artist art left JOIN dbo.Album al
+	ON art.ArtistId = al.ArtistId
+where al.Title is null
+group by art.[Name]
+order by 4
+;--347
+
+
+
+--*****************************************************
+--Take the query - and modify it - return the scalar
+-- the scalar will be the COUNT of artist with no album
+--*****************************************************
+select count(*) as 'OrphanedArtists'
+from dbo.Artist art LEFT JOIN dbo.Album al
+	ON art.ArtistId = al.ArtistId
+where al.Title is null
+;-- 71 artists without albums
+
+
+--********************************************************
+--count albums
+--********************************************************
+select count(al.albumId)
+from dbo.Album al
+;--347
+
+select count(al.ArtistId)
+from dbo.Album al
+;--347
+
+select 347 - 275; --72!! We have one runner!!
+
+select count(*) as 'OrphanedArtists'
+from dbo.Artist art LEFT JOIN dbo.Album al
+	ON art.ArtistId = al.ArtistId
+where al.Title is null
+;
+go
+
+
+--******************************************
+--CREATE A VIEW TO ANALYZE THE DIFFERENCE
+--******************************************
+create view bia.nonOrphans
+as
+select art.ArtistId
+	  ,art.[Name] as 'Artist'
+from dbo.Artist art left JOIN dbo.Album al
+	ON art.ArtistId = al.ArtistId
+where AlbumId is not null
+group by art.ArtistId ,art.[Name]
+;
+
+create view bia.Orphans
+as
+select art.ArtistId
+	  ,art.[Name] as 'Artist'
+from dbo.Artist art left JOIN dbo.Album al
+	ON art.ArtistId = al.ArtistId
+where AlbumId is not null
+group by art.ArtistId ,art.[Name]
+;
+
+--***********************************************
+--      dOING THE uNION bETWEEN vIEWS
+--***********************************************
+
+SELECT * 
+	  ,'Orphan' as 'ArtistState'
+FROM bia.Orphans --71
+
+UNION
+
+SELECT * 
+	  ,'non-Orphan' as 'ArtistState'
+FROM bia.nonOrphans --204
+;
