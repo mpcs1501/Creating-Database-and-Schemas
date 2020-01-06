@@ -1,0 +1,65 @@
+https://docs.microsoft.com/en-us/sql/relational-databases/indexes/create-unique-indexes?view=sql-server-ver15
+
+USE AdventureWorks2012;  
+GO  
+-- Find an existing index named AK_UnitMeasure_Name and delete it if found  
+IF EXISTS (SELECT name from sys.indexes  
+           WHERE name = N'AK_UnitMeasure_Name')   
+   DROP INDEX AK_UnitMeasure_Name ON Production.UnitMeasure;   
+GO  
+-- Create a unique index called AK_UnitMeasure_Name  
+-- on the Production.UnitMeasure table using the Name column.  
+CREATE UNIQUE INDEX AK_UnitMeasure_Name   
+   ON Production.UnitMeasure (Name);   
+GO  
+
+
+To create a unique index by using the Table Designer
+In Object Explorer, expand the database that contains the table on which you want to create a unique index.
+
+Expand the Tables folder.
+
+Right-click the table on which you want to create a unique index and select Design.
+
+On the Table Designer menu, select Indexes/Keys.
+
+In the Indexes/Keys dialog box, click Add.
+
+Select the new index in the Selected Primary/Unique Key or Index text box.
+
+In the main grid, under (General), select Type and then choose Index from the list.
+
+Select Columns, and then click the ellipsis (...).
+
+In the Index Columns dialog box, under Column Name, select the columns you want to index. You can select up to 16 columns. For optimal performance, select only one or two columns per index. For each column you select, indicate whether the index arranges values of this column in ascending or descending order.
+
+When all columns for the index are selected, click OK.
+
+In the grid, under (General), select Is Unique and then choose Yes from the list.
+
+Optional: In the main grid, under Table Designer, select Ignore Duplicate Keys and then choose Yes from the list. Do this if you want to ignore attempts to add data that would create a duplicate key in the unique index.
+
+Click Close.
+
+On the File menu, click Savetable_name.
+
+Create a unique index by using Object Explorer
+In Object Explorer, expand the database that contains the table on which you want to create a unique index.
+
+Expand the Tables folder.
+
+Expand the table on which you want to create a unique index.
+
+Right-click the Indexes folder, point to New Index, and select Non-Clustered Index....
+
+In the New Index dialog box, on the General page, enter the name of the new index in the Index name box.
+
+Select the Unique check box.
+
+Under Index key columns, click Add....
+
+In the Select Columns fromtable_name dialog box, select the check box or check boxes of the table column or columns to be added to the unique index.
+
+Click OK.
+
+In the New Index dialog box, click OK.
